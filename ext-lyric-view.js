@@ -85,7 +85,8 @@ window.AppleNowPlayingExtView = class {
     if (force || Math.abs((animation.currentTime ?? -Infinity) - target) > (playing ? 45 : .5)) {
       animation.currentTime = target;
     }
-    if (playing && animation.playState !== 'running') animation.play();
+    // play() rewinds a finished effect while the audio clock catches up.
+    if (playing && animation.playState !== 'running' && animation.currentTime < end) animation.play();
     if (!playing && animation.playState === 'running') animation.pause();
   }
 

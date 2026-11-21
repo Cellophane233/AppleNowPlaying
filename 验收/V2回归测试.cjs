@@ -219,7 +219,6 @@ async function run(extraTests, options = {}) {
       'preferences-v2': JSON.stringify({ gradientDim: 18 }),
       'lyric-offsets': JSON.stringify({ 555: -300 }),
       'takeover-vinyl': 'on',
-      'settings-category': 'tools',
     };
     if (!options.onlyUI) {
       for (const [suffix, value] of Object.entries(storageValues)) {
@@ -229,7 +228,6 @@ async function run(extraTests, options = {}) {
       await evaluate('localStorage.setItem("apple-playing.preferences-v2", ' + JSON.stringify(storageValues['preferences-v2']) + ')');
       await evaluate('localStorage.setItem("apple-style-now-playing.preferences-v2", "{}")');
       await evaluate('localStorage.setItem("apple-playing.takeover-vinyl", "off")');
-      await evaluate('localStorage.setItem("apple-playing.settings-category", "tools")');
       await evaluate('localStorage.setItem("apple-now-playing.takeover-vinyl", "on")');
     }
     if (options.preferences) {
@@ -298,7 +296,6 @@ async function run(extraTests, options = {}) {
     await evaluate('test.song("101","逐字样本")');
     await until('document.querySelector(".apple-now-playing-title").textContent','逐字样本');
     await until(sourceLabel,'当前曲目歌词来源：网易云 YRC');
-    await action('toggle-roman');
     await until('!!document.querySelector(".apple-now-playing-lyric-roman")', true);
     await action('toggle-karaoke');
     await until('document.querySelectorAll(".apple-now-playing-word").length', 0);

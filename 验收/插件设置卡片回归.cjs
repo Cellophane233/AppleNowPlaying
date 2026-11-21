@@ -19,7 +19,7 @@ runUI(async ({ evaluate, action, call, until }) => {
   const storage = 'localStorage.getItem("apple-now-playing.takeover-vinyl")';
   assert.equal(await evaluate(root + '.querySelector("h2").textContent'), 'AppleNowPlaying 设置');
   assert.deepEqual(await evaluate('Array.from(' + root + '.querySelectorAll("h3"), h => h.textContent)'), ['播放页', '歌词', '项目']);
-  assert.equal(await evaluate(root + '.querySelectorAll(".anp-config-card").length'), 5);
+  assert.equal(await evaluate(root + '.querySelectorAll(".anp-config-card").length'), 7);
   assert.equal(await evaluate('getComputedStyle(' + toggle + ').backgroundColor'), 'rgb(209, 44, 55)');
   for (const width of [720, 240]) {
     const layout = await evaluate('(' + function (width) {
@@ -27,7 +27,8 @@ runUI(async ({ evaluate, action, call, until }) => {
       const config = test.configMount.firstElementChild;
       const cards = Array.from(config.querySelectorAll('.anp-config-card'));
       return cards.every(card => card.scrollWidth <= card.clientWidth + 1 &&
-        getComputedStyle(card).backgroundColor === 'rgb(255, 255, 255)' && card.querySelector('svg'));
+        getComputedStyle(card).backgroundColor === 'rgb(255, 255, 255)' &&
+        (card.classList.contains('anp-source-config') || card.querySelector('svg')));
     } + ')(' + width + ')');
     assert.equal(layout, true);
   }

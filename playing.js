@@ -53,12 +53,11 @@
   const preferencesKey = storagePrefix + 'preferences-v2';
   const offsetsKey = storagePrefix + 'lyric-offsets';
   const takeoverKey = storagePrefix + 'takeover-vinyl';
-  const settingsCategoryKey = storagePrefix + 'settings-category';
   const settingDefinitions = [
     { group: '歌词', key: 'karaoke', label: '开启逐字', value: true },
     { group: '歌词', key: 'translation', label: '显示译文', value: true },
-    { group: '歌词', key: 'roman', label: '显示罗马音', value: false },
-    { group: '歌词', key: 'romanKaraoke', label: '开启罗马音逐字', value: false },
+    { group: '歌词', key: 'roman', label: '显示罗马音', value: true },
+    { group: '歌词', key: 'romanKaraoke', label: '开启罗马音逐字', value: true },
     { group: '歌词', key: 'romanGrouping', label: '罗马音分词', value: false },
     { group: '歌词', key: 'preview', label: '进度条歌词预览', value: true },
     { group: '歌词', key: 'originalBold', label: '原文歌词加粗', value: true },
@@ -67,20 +66,20 @@
     { group: '歌词', key: 'lyricBlur', label: '歌词模糊', value: true },
     { group: '歌词', key: 'fontSize', label: '原文字号', value: 'auto',
       options: [['auto', '随窗口调整'], ...[24, 28, 32, 36, 42, 48, 54, 60].map(size => [String(size), size + ' px'])] },
-    { group: '歌词', key: 'translationSize', label: '译文相对字号', value: 62, min: 40, max: 100, step: 2 },
-    { group: '歌词', key: 'romanSize', label: '罗马音相对字号', value: 52, min: 40, max: 100, step: 2 },
-    { group: '歌词', key: 'backgroundVocalSize', label: '背景歌词大小', value: 28, min: 12, max: 72, step: 1, unit: 'px' },
+    { group: '歌词', key: 'translationSize', label: '译文相对字号', value: 64, min: 40, max: 100, step: 2 },
+    { group: '歌词', key: 'romanSize', label: '罗马音相对字号', value: 64, min: 40, max: 100, step: 2 },
+    { group: '歌词', key: 'backgroundVocalSize', label: '背景歌词大小', value: 24, min: 12, max: 72, step: 1, unit: 'px' },
     { group: '歌词', key: 'duetSize', label: '对唱歌词大小', value: 36, min: 12, max: 72, step: 1, unit: 'px' },
     { group: '歌词', key: 'alignment', label: '当前行位置', value: 'middle',
       options: [['upper', '靠上'], ['middle', '居中']] },
     { group: '歌词', key: 'scrollbar', label: '手动滚动时显示歌词滚动条', value: true },
     { group: '歌词', key: 'lyricLift', label: '歌词上浮', value: true },
-    { group: '歌词', key: 'scrollStyle', label: '滚动方式', value: 'normal',
-      options: [['normal', 'extSpotify 原版'], ['spring', '轻微回弹'], ['stagger', '逐行错开']] },
+    { group: '歌词', key: 'scrollStyle', label: '滚动方式', value: 'spring',
+      options: [['normal', '平滑移动'], ['spring', '轻微回弹'], ['stagger', '逐行错开']] },
     { group: '歌词', key: 'globalOffset', label: '全局歌词偏移', value: 0, min: -10000, max: 10000, step: 100, unit: 'ms' },
     { group: '外观', key: 'display', label: '显示内容', value: 'all',
       options: [['all', '全部'], ['lyrics', '仅歌词'], ['cover', '仅封面']] },
-    { group: '外观', key: 'alias', label: '别名与译名', value: 'hidden',
+    { group: '外观', key: 'alias', label: '别名与译名', value: 'translated',
       options: [['hidden', '隐藏'], ['alias', '别名优先'], ['translated', '译名优先'], ['both', '同时显示']] },
     { group: '外观', key: 'background', label: '背景', value: 'fluid',
       options: [['gradient', '渐变'], ['blur', '模糊封面'], ['solid', '纯色'], ['fluid', '流体'], ['fluid-static', '静态流体']] },
@@ -88,9 +87,9 @@
     { group: '外观', key: 'gradientDim', label: '渐变暗化', value: 0, min: 0, max: 60, step: 2, when: 'gradient' },
     { group: '外观', key: 'blur', label: '封面模糊', value: 60, min: 10, max: 100, step: 2, when: 'blur' },
     { group: '外观', key: 'blurDim', label: '模糊背景暗化', value: 30, min: 0, max: 60, step: 2, when: 'blur' },
-    { group: '外观', key: 'coverShadow', label: '封面阴影', value: false },
-    { group: '外观', key: 'textShadow', label: '文字阴影', value: false },
-    { group: '外观', key: 'textGlow', label: '文字辉光', value: false },
+    { group: '外观', key: 'coverShadow', label: '封面阴影', value: true },
+    { group: '外观', key: 'textShadow', label: '文字阴影', value: true },
+    { group: '外观', key: 'textGlow', label: '文字辉光', value: true },
     { group: '外观', key: 'fluidQuality', label: '流体画质', value: 'balanced', when: ['fluid', 'fluid-static'],
       options: [['low', '性能'], ['balanced', '均衡'], ['high', '精细']] },
     { group: '外观', key: 'fluidFps', label: '流体帧率', value: '30', when: 'fluid',
@@ -1446,14 +1445,19 @@
     return result.sort((a, b) => a.time - b.time);
   }
 
-  async function requestLyrics(url, parent, timeout, read) {
+  async function requestLyrics(url, parent, timeout, read, cache, customSource = false) {
     const controller = new AbortController();
     const cancel = () => controller.abort();
     parent.signal.addEventListener('abort', cancel, { once: true });
     if (parent.signal.aborted) cancel();
     const timer = setTimeout(cancel, timeout);
     try {
-      const response = await fetch(url, { signal: controller.signal });
+      const options = { signal: controller.signal, cache };
+      if (customSource) {
+        options.credentials = 'omit';
+        options.referrerPolicy = 'no-referrer';
+      }
+      const response = await fetch(url, options);
       if (!response.ok) return { missing: response.status === 404 };
       return { data: await read(response) };
     } catch (_) {
@@ -1468,7 +1472,7 @@
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let takeover = storedValue(takeoverKey) !== 'off';
   let lyricSource = '打开播放页后加载';
-  let settingsSource;
+  let lyricSettings, manualLyricRefresh;
   let page, launcher, view, snapshot, pageStyle, entryObserver, replacementOff;
   const lifetime = new AbortController();
   let activity, frame, unwatchHost, lyricResize;
@@ -1620,6 +1624,9 @@
           </fieldset>
             <div class="apple-now-playing-settings-actions">
               <button type="button" data-action="source">歌词来源</button>
+              <button type="button" data-action="refresh-lyrics" aria-describedby="apple-now-playing-lyric-refresh-hint">刷新本曲歌词</button>
+              <p class="apple-now-playing-setting-help" id="apple-now-playing-lyric-refresh-hint">如果歌词未显示逐字动态效果，可以尝试刷新歌曲来源，重新获取支持逐字效果的歌词文件。</p>
+              <p class="apple-now-playing-setting-help apple-now-playing-lyric-refresh-result" role="status" hidden></p>
             </div>
         </div>
         </div>
@@ -1658,6 +1665,7 @@
       queueScroll: q('queue-scroll'), queueSource: q('queue-source'), tools: q('lyric-actions'),
       offset: q('offset-value'), preview: q('preview'), copy: q('copy-view'), copyText: q('copy-text'),
       settings: q('settings-panel'), settingsToggle: q('settings-button'), preferences: q('preferences'), rowMenu: q('row-menu'), toast: q('toast'),
+      lyricRefresh: { button: page.querySelector('[data-action="refresh-lyrics"]'), result: q('lyric-refresh-result') },
       fluid: q('fluid'), sourcePanel: q('source-panel'), sourceContent: q('source-content'), queueMenu: q('queue-menu'),
     };
     fluidRenderer = new AppleNowPlayingFluidBackground(view.fluid);
@@ -2170,12 +2178,10 @@
     const updateOrientation = () => navigation.setAttribute('aria-orientation', innerWidth <= 700 ? 'horizontal' : 'vertical');
     updateOrientation();
     window.addEventListener('resize', updateOrientation, { signal: lifetime.signal });
-    let savedCategory;
-    try { savedCategory = storedValue(settingsCategoryKey); } catch (_) {}
-    selectSettingsCategory(view.settingsCategories.has(savedCategory) ? savedCategory : 'reading', false);
+    selectSettingsCategory('appearance');
   }
 
-  function selectSettingsCategory(id, persist = true) {
+  function selectSettingsCategory(id) {
     if (!view.settingsCategories.has(id)) return;
     closeDropdown();
     const previous = view.settingsCategories.get(view.settingsCategory);
@@ -2188,9 +2194,6 @@
       category.tab.tabIndex = selected ? 0 : -1;
     }
     view.preferences.scrollTop = view.settingsCategories.get(id).scrollTop;
-    if (persist) {
-      try { localStorage.setItem(settingsCategoryKey, id); } catch (_) {}
-    }
     if (id === 'reading' && settingsOpen && view.fontPicker && preferences.customFont && !fontsLoaded) loadFonts();
   }
 
@@ -2380,6 +2383,7 @@
       view.sourceContent.append(row);
     };
     entry('当前来源', lyricSource);
+    entry('自定义来源', lyricDetails.customSourceName);
     entry('AMLL 取词节点', lyricDetails.mirror);
     entry('来源地址', lyricDetails.url || '');
     entry('字段补充', (lyricDetails.supplements || []).join('、'));
@@ -2398,7 +2402,7 @@
     const definition = settingDefinitions.find(item => item.key === key);
     if (!definition) return;
     preferences[key] = settingValue(definition, value);
-    if (key === 'roman' && !preferences.roman) preferences.romanKaraoke = false;
+    if (key === 'roman') preferences.romanKaraoke = preferences.roman;
     if (key === 'fontPreset') {
       const presets = {
         misans: ['MiSans', 'MiSans VF'],
@@ -2549,6 +2553,11 @@
       const button = view.tools.querySelector('[data-action="toggle-' + key + '"]');
       button.disabled = !available[key];
       button.setAttribute('aria-pressed', String(preferences[key]));
+      if (key === 'roman') {
+        const lineOnly = available.roman && !vocals.some(row => row.romanWords?.some(word => Number.isFinite(word.time) && word.duration > 0));
+        button.classList.toggle('is-line-only', lineOnly);
+        button.title = lineOnly ? '无逐字罗马音' : '显示罗马音';
+      }
       view.prefFields.get(key).input.disabled = !available[key];
     }
     const romanKaraoke = view.prefFields.get('romanKaraoke');
@@ -2692,10 +2701,8 @@
     closePopups();
     popupFocus = view.settingsToggle;
     setSettingsVisible(true);
-    const category = view.settingsCategories.get(view.settingsCategory);
-    view.preferences.scrollTop = category.scrollTop;
-    category.tab.focus({ preventScroll: true });
-    if (view.settingsCategory === 'reading' && preferences.customFont && !fontsLoaded) loadFonts();
+    selectSettingsCategory('appearance');
+    view.settingsCategories.get('appearance').tab.focus({ preventScroll: true });
     setControlsHidden(false);
   }
 
@@ -2940,6 +2947,7 @@
   function dispose() {
     if (lifetime.signal.aborted) return;
     lifetime.abort();
+    manualLyricRefresh?.request?.abort();
     window.AppleNowPlayingQQLyrics?.setNativeFetch?.(null);
     entryObserver?.disconnect();
     endNativePlaylist(true, false);
@@ -3604,6 +3612,7 @@
         break;
       case 'close-settings': closePopups(true); break;
       case 'source': showSourceDetails(); break;
+      case 'refresh-lyrics': refreshCurrentLyrics(); break;
       case 'close-source': closePopups(true); break;
       case 'load-fonts': loadFonts(); break;
       case 'add-font': addSelectedFont(); break;
@@ -3844,10 +3853,23 @@
   }
 
   function refreshSettingsSource() {
-    if (!settingsSource) return;
-    const id = activity ? snapshot?.id : host.trackId();
-    const shown = id && lyricTrackId === id && !restartLyrics ? lyricSource : '打开播放页后加载';
-    text(settingsSource, shown);
+    if (!lyricSettings && !view?.lyricRefresh) return;
+    const id = host.trackId();
+    if (lyricSettings) {
+      const shown = id && lyricTrackId === id && !restartLyrics ? lyricSource : '打开播放页后加载';
+      const customName = shown === lyricSource ? lyricDetails.customSourceName : '';
+      text(lyricSettings.source, customName ? customName + '（' + shown + '）' : shown);
+    }
+    const pending = !!manualLyricRefresh?.request;
+    const message = manualLyricRefresh?.id === id ? manualLyricRefresh.message : '';
+    for (const controls of [lyricSettings, view?.lyricRefresh]) {
+      if (!controls) continue;
+      const { button, result } = controls;
+      button.disabled = pending;
+      text(button, pending ? '正在刷新…' : '刷新本曲歌词');
+      text(result, message || '');
+      result.hidden = !message;
+    }
   }
 
   function setLyricSource(value) {
@@ -3861,6 +3883,43 @@
     view.status.hidden = tab !== 'lyrics' || lyrics.length > 0;
   }
 
+  function parseTimedSuffixes(line, offset) {
+    const words = [], markers = [...line.matchAll(/\((\d+),(\d+)\)/g)];
+    let from = 0;
+    for (const marker of markers) {
+      const text = line.slice(from, marker.index);
+      if (text) words.push({ time: Math.max(0, Number(marker[1]) - offset), duration: Number(marker[2]), text });
+      from = marker.index + marker[0].length;
+    }
+    return { words, trailing: line.slice(from), hasTiming: markers.length > 0 };
+  }
+
+  function parseLyricifySyllable(raw) {
+    const rows = [];
+    const offset = Number(raw.match(/^\[offset:(-?\d+)\]/m)?.[1]) || 0;
+    let lead;
+    for (const line of raw.split(/\r?\n/)) {
+      const header = line.match(/^\[([0-8])\](.*)$/);
+      if (!header) continue;
+      const parsed = parseTimedSuffixes(header[2], offset);
+      const words = parsed.words.filter(word => Number.isSafeInteger(word.time + word.duration));
+      const timed = words.filter(word => word.duration > 0 && word.text.trim());
+      if (!timed.length) continue;
+      const time = Math.min(...timed.map(word => word.time));
+      const end = Math.max(...timed.map(word => word.time + word.duration));
+      if (parsed.trailing) words.push({ time: end, duration: 0, text: parsed.trailing });
+      const flag = Number(header[1]);
+      const row = { time, end, content: words.map(word => word.text).join('').trim(), words,
+        side: flag % 3 === 2 ? 'right' : 'left', backing: flag >= 6, backingLines: [] };
+      if (row.backing && lead) lead.backingLines.push(row);
+      else {
+        rows.push(row);
+        if (!row.backing) lead = row;
+      }
+    }
+    return rows.sort((a, b) => a.time - b.time);
+  }
+
   function parseQQLyrics(payload) {
     function qrcRows(raw) {
       const result = [];
@@ -3868,16 +3927,9 @@
       for (const line of String(raw || '').split(/\r?\n/)) {
         const header = line.match(/^\[(\d+),(\d+)\](.*)$/);
         if (!header) continue;
-        const words = [], markers = [...header[3].matchAll(/\((\d+),(\d+)\)/g)];
-        let from = 0;
-        for (const marker of markers) {
-          const text = header[3].slice(from, marker.index);
-          if (text) words.push({ time: Math.max(0, Number(marker[1]) - offset), duration: Number(marker[2]), text });
-          from = marker.index + marker[0].length;
-        }
-        const trailing = header[3].slice(from);
+        const { words, trailing, hasTiming } = parseTimedSuffixes(header[3], offset);
         if (trailing) words.push({ time: Math.max(0, Number(header[1]) - offset), duration: 0, text: trailing });
-        const content = (markers.length ? words.map(w => w.text).join('') : header[3]).trim();
+        const content = (hasTiming ? words.map(w => w.text).join('') : header[3]).trim();
         if (!content || content === '//' || /纯音乐[，,、 ]?请欣赏/.test(content)) continue;
         result.push({ time: Math.max(0, Number(header[1]) - offset), end: Math.max(0, Number(header[1]) + Number(header[2]) - offset),
           content, words, side: 'left', backing: false, backingLines: [] });
@@ -3953,8 +4005,74 @@
 
   const lyricCacheVersion = 1;
   const lyricCacheMaxAge = 7 * 24 * 60 * 60 * 1000;
-  const lyricSourcePriority = ['AMLL TTML', 'QQ 音乐 QRC', 'QQ 音乐 LRC', '网易云 YRC', '网易云 LRC'];
+  const lyricSourcesKey = storagePrefix + 'lyric-sources';
+  const builtInLyricSources = {
+    amll: { name: 'AMLL TTML', formats: ['AMLL TTML'] },
+    qq: { name: 'QQ 音乐', formats: ['QQ 音乐 QRC', 'QQ 音乐 LRC'] },
+    netease: { name: '网易云音乐', formats: ['网易云 YRC', '网易云 LRC'] },
+  };
+  const customLyricFormatLabels = {
+    lrc: 'LyRiC 歌词', ttml: 'TTML 歌词', yrc: 'YRC 歌词（网易云逐词）',
+    qrc: 'QRC 歌词（QQ 音乐逐词）', lys: 'Lyricify Syllable 歌词',
+  };
+  const customLyricFormats = Object.keys(customLyricFormatLabels);
+  const validLyricSources = [...Object.values(builtInLyricSources).flatMap(source => source.formats),
+    ...customLyricFormats.map(format => '自定义 ' + format.toUpperCase())];
+  let lyricSourceSettings = normalizeLyricSources(storedObject(lyricSourcesKey));
   const lyricCacheWrites = new Map();
+
+  function customLyricUrl(template, song) {
+    if (typeof template !== 'string' || template.length > 2048) return;
+    const address = template.split('#', 1)[0];
+    const authority = address.match(/^https:\/\/[^/?#]+/i)?.[0];
+    const tokenPattern = /\[([A-Z][A-Z0-9_]*)\]/g;
+    if (!authority || /\[[A-Z][A-Z0-9_]*\]/.test(authority)) return;
+    const tokens = [...address.slice(authority.length).matchAll(tokenPattern)];
+    if (!tokens.length || tokens.some(([, token]) => !/^(?:NCM_ID|SONG_(?:NAME|ARTISTS|ALIAS)(?:_URI)?)$/.test(token))) return;
+    const artistNames = Array.isArray(song.artistItems) ? song.artistItems.map(item => item?.name).filter(Boolean).join(',') : '';
+    const fields = {
+      NCM_ID: song.id,
+      SONG_NAME: song.name || '',
+      SONG_ARTISTS: artistNames || song.artist || '',
+      SONG_ALIAS: Array.isArray(song.aliases) ? song.aliases.join(',') : '',
+    };
+    try {
+      const url = new URL(address.replace(tokenPattern, (_, token) => {
+        const value = fields[token.replace(/_URI$/, '')];
+        return token.endsWith('_URI') ? encodeURIComponent(value) : value;
+      }));
+      if (url.protocol === 'https:' && !url.username && !url.password) return url;
+    } catch (_) { /* Invalid URL templates cannot be used as sources. */ }
+  }
+
+  function lyricSourceWebsite(value) {
+    if (typeof value !== 'string' || !value || value.length > 2048) return;
+    try {
+      const url = new URL(value);
+      if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password) return url.href;
+    } catch (_) { /* Invalid websites are not shown as links. */ }
+  }
+
+  function normalizeLyricSources(settings) {
+    const custom = Array.isArray(settings.custom) ? settings.custom.filter(source =>
+      /^custom-[a-z\d-]+$/.test(source?.id) && typeof source.name === 'string' && source.name.trim() &&
+      customLyricFormats.includes(source.format) && customLyricUrl(source.url, { id: '1' }))
+      .map(source => ({ ...source, website: lyricSourceWebsite(source.website) || '',
+        description: typeof source.description === 'string' ? source.description : '' })) : [];
+    const known = [...Object.keys(builtInLyricSources), ...custom.map(source => source.id)];
+    const order = [...new Set([...(Array.isArray(settings.order) ? settings.order : []), ...known])].filter(id => known.includes(id));
+    return { order, custom, revision: Number.isSafeInteger(settings.revision) && settings.revision > 0 ? settings.revision : 0 };
+  }
+
+  function lyricSourceRank(source, details, order) {
+    const id = details.customSourceId || Object.keys(builtInLyricSources).find(id => builtInLyricSources[id].formats.includes(source));
+    const index = order.indexOf(id);
+    return index < 0 ? Infinity : index * 2 + (builtInLyricSources[id]?.formats.indexOf(source) || 0);
+  }
+
+  function hasLyricText(rows) {
+    return rows.some(row => row.content || row.backingLines.some(vocal => vocal.content));
+  }
 
   function validLyricCache(entry, id) {
     const validWords = words => Array.isArray(words) && words.every(word => typeof word?.text === 'string' &&
@@ -3968,9 +4086,9 @@
       (vocal.translation === undefined || typeof vocal.translation === 'string');
     const details = entry?.details;
     return entry?.version === lyricCacheVersion && entry.id === id && Number.isFinite(entry.savedAt) &&
-      lyricSourcePriority.includes(entry.source) && Array.isArray(entry.rows) &&
+      validLyricSources.includes(entry.source) && Array.isArray(entry.rows) &&
       entry.rows.every(row => validVocal(row) && Array.isArray(row.backingLines) && row.backingLines.every(validVocal)) &&
-      entry.rows.some(row => row.content || row.backingLines.some(vocal => vocal.content)) &&
+      hasLyricText(entry.rows) &&
       Array.isArray(details?.supplements) && details.supplements.every(item => typeof item === 'string') &&
       Array.isArray(details.metadata) && details.metadata.every(item => typeof item?.key === 'string' && typeof item.value === 'string') &&
       Array.isArray(details.contributors) && details.contributors.every(item => typeof item?.role === 'string' && typeof item.name === 'string');
@@ -3981,11 +4099,59 @@
       await fs.mkdir(directory);
       await fs.mkdir(directory + '\\lyrics-cache');
       await fs.writeFile(file, new Blob([JSON.stringify(entry)], { type: 'application/json' }));
-    }).catch(error => console.warn('[AppleNowPlaying] 无法保存歌词缓存', error));
+      return true;
+    }).catch(error => {
+      console.warn('[AppleNowPlaying] 无法保存歌词缓存', error);
+      return false;
+    });
     lyricCacheWrites.set(file, write);
     write.then(() => {
       if (lyricCacheWrites.get(file) === write) lyricCacheWrites.delete(file);
     });
+    return write;
+  }
+
+  async function openLyricCache(id) {
+    const { app, fs } = window.betterncm || {};
+    if (typeof app?.getDataPath !== 'function' || typeof fs?.readFileText !== 'function' ||
+        typeof fs.mkdir !== 'function' || typeof fs.writeFile !== 'function') return;
+    let cache;
+    try {
+      const base = await app.getDataPath();
+      if (typeof base !== 'string' || !/^[A-Za-z]:[\\/]/.test(base)) return;
+      const directory = base.replace(/[\\/]+$/, '').replace(/\//g, '\\') + '\\AppleNowPlaying-data';
+      const file = directory + '\\lyrics-cache\\' + id + '.json';
+      cache = { fs, directory, file };
+      const writing = lyricCacheWrites.get(file);
+      if (writing) await writing;
+      const entry = JSON.parse(await fs.readFileText(file));
+      if (validLyricCache(entry, id)) cache.entry = entry;
+    } catch (_) { /* Missing or unreadable cache entries fall back to network sources. */ }
+    return cache;
+  }
+
+  function publishLyrics(rows, source, details, duration) {
+    const visible = activity && snapshot?.id === lyricTrackId;
+    const anchor = visible ? captureLyricAnchor() : undefined;
+    const focusedTime = visible && view.lyrics.contains(document.activeElement) ? lyrics[lyricFocus]?.time : undefined;
+    if (details) lyricDetails = details;
+    rawLyrics = rows;
+    lyrics = prepareLyrics(rows, duration);
+    lyricFocus = -1;
+    setLyricSource(source);
+    if (!visible) {
+      if (lyricView && !lyricView.released) lyricView.releaseRows();
+      return;
+    }
+    const now = performance.now();
+    renderLyrics();
+    if (browseUntil > now) restoreLyricAnchor(anchor);
+    if (focusedTime !== undefined) {
+      const index = lyrics.findIndex(row => row.kind === 'line' && row.time >= focusedTime);
+      if (index >= 0) setLyricFocus(index,true,false);
+    }
+    syncLyrics(playbackTime(now),now,false);
+    if (previewPosition) showPreview(previewPosition.x);
   }
 
   async function loadLyrics(id) {
@@ -4016,33 +4182,40 @@
     const request = lyricRequest = new AbortController();
     const current = () => activity && lyricRequest === request && !request.signal.aborted &&
       snapshot?.id === id && host.trackId() === id;
-    const track = { id, title: snapshot.name, artist: snapshot.artist, album: snapshot.album, durationMs: Math.round(snapshot.duration*1000) };
-    const { app, fs } = window.betterncm || {};
-    let cacheDirectory, cacheFile, cached;
-    function publish(rows, source, details) {
+    const song = snapshot;
+    const sources = lyricSourceSettings;
+    try {
+      const cache = await openLyricCache(id);
       if (!current()) return;
-      if (details) lyricDetails = details;
-      const anchor = captureLyricAnchor(), now = performance.now();
-      const focusedTime = view.lyrics.contains(document.activeElement) ? lyrics[lyricFocus]?.time : undefined;
-      rawLyrics = rows;
-      lyrics = prepareLyrics(rows, snapshot?.duration || 0);
-      lyricFocus = -1;
-      setLyricSource(source);
-      renderLyrics();
-      if (browseUntil > now) restoreLyricAnchor(anchor);
-      if (focusedTime !== undefined) {
-        const index = lyrics.findIndex(row => row.kind === 'line' && row.time >= focusedTime);
-        if (index >= 0) setLyricFocus(index,true,false);
+      const entry = cache?.entry;
+      const sourcesChanged = (entry?.sourceRevision ?? 0) !== sources.revision;
+      const cached = sourcesChanged && entry?.details.customSourceId ? undefined : entry;
+      if (cached) {
+        publishLyrics(cached.rows, cached.source, cached.details, snapshot.duration);
+        const age = Date.now() - cached.savedAt;
+        if (!sourcesChanged && age >= 0 && age < lyricCacheMaxAge) return;
       }
-      syncLyrics(playbackTime(now),now,false);
-      if (previewPosition) showPreview(previewPosition.x);
+      await fetchLyricSources(song, request, current, (rows, source, details) => {
+        const valid = hasLyricText(rows);
+        if (!cached || (sourcesChanged && valid)) publishLyrics(rows, source, details, snapshot.duration);
+        if (!cache || !valid) return;
+        if (cached && !sourcesChanged &&
+            lyricSourceRank(source, details, sources.order) > lyricSourceRank(cached.source, cached.details, sources.order)) return;
+        writeLyricCache(cache.fs, cache.directory, cache.file, { version: lyricCacheVersion, id,
+          sourceRevision: sources.revision, savedAt: Date.now(), source, details, rows });
+      }, { cached, sources });
+    } catch (error) {
+      if (!current()) return;
+      if (!lyrics.length) publishLyrics([], '歌词获取失败', undefined, snapshot.duration);
+      console.warn('[AppleNowPlaying] 无法处理歌词', error);
+    } finally {
+      if (lyricRequest === request) lyricRequest = undefined;
     }
-    function accept(rows, source, details) {
-      if (!cached) publish(rows, source, details);
-      if (!cacheFile || !rows.some(row => row.content || row.backingLines.some(vocal => vocal.content))) return;
-      if (cached && lyricSourcePriority.indexOf(source) > lyricSourcePriority.indexOf(cached.source)) return;
-      writeLyricCache(fs, cacheDirectory, cacheFile, { version: lyricCacheVersion, id, savedAt: Date.now(), source, details, rows });
-    }
+  }
+
+  async function fetchLyricSources(song, request, current, accept, { cached, sources, cacheMode }) {
+    const { id, name, artist, album, duration } = song;
+    const track = { id, title: name, artist, album, durationMs: Math.round(duration * 1000) };
     const nativeUrl = new URL('/api/song/lyric/v1',window.APP_CONF?.domain || 'https://music.163.com');
     nativeUrl.search='id='+id+'&lv=0&tv=0&rv=0&kv=0&yv=0&ytv=0&yrv=0&cp=false';
     const amllPath = 'ncm-lyrics/' + id + '.ttml';
@@ -4051,89 +4224,151 @@
       ['作者镜像', 'https://amll-ttml-db.stevexmh.net/ncm/' + id],
       ['GitHub AMLL', 'https://raw.githubusercontent.com/amll-dev/amll-ttml-db/refs/heads/main/' + amllPath],
     ];
-    const readNative = () => requestLyrics(nativeUrl, request, 5000, response => response.json());
+    let nativeRequest, nativeFallback;
+    const readNative = () => nativeRequest || (nativeRequest = requestLyrics(nativeUrl, request, 5000, response => response.json(), cacheMode));
     const validNative = data => data && typeof data === 'object' && (data.code == null || data.code === 200);
-    try {
-      if (typeof app?.getDataPath === 'function' && typeof fs?.readFileText === 'function' &&
-          typeof fs.mkdir === 'function' && typeof fs.writeFile === 'function') {
-        try {
-          const base = await app.getDataPath();
+    const providers = {
+      async amll() {
+        for (const [mirror, url] of amllSources) {
+          const result = await requestLyrics(url, request, 4000, response => response.text(), cacheMode);
           if (!current()) return;
-          if (typeof base === 'string' && /^[A-Za-z]:[\\/]/.test(base)) {
-            cacheDirectory = base.replace(/[\\/]+$/, '').replace(/\//g, '\\') + '\\AppleNowPlaying-data';
-            cacheFile = cacheDirectory + '\\lyrics-cache\\' + id + '.json';
-            const writing = lyricCacheWrites.get(cacheFile);
-            if (writing) await writing;
-            const entry = JSON.parse(await fs.readFileText(cacheFile));
-            if (validLyricCache(entry, id)) cached = entry;
-          }
-        } catch (_) { /* Cache misses and read failures use the normal sources. */ }
-      }
-      if (!current()) return;
-      if (cached) {
-        publish(cached.rows, cached.source, cached.details);
-        const age = Date.now() - cached.savedAt;
-        if (age >= 0 && age < lyricCacheMaxAge) return;
-      }
-      for (const [mirror, url] of amllSources) {
-        const result = await requestLyrics(url, request, 4000, response => response.text());
-        if (!current()) return;
-        const rows = result.data ? parseTtml(result.data) : [];
-        if (!rows.length) continue;
-        const details = { url, mirror, metadata: extractTtmlMetadata(result.data), contributors: [], supplements: [] };
+          const rows = result.data ? parseTtml(result.data) : [];
+          if (!rows.length) continue;
+          const details = { url, mirror, metadata: extractTtmlMetadata(result.data), contributors: [], supplements: [] };
 
-        // Native sidecars can fill missing fields without replacing the selected TTML.
-        const missing = vocal => !vocal.translation || !vocal.roman || (vocal.roman && !vocal.romanWords?.length);
-        const needsSidecars = rows.some(row => missing(row) || row.backingLines.some(missing));
-        const deferWrite = needsSidecars && cached?.source === 'AMLL TTML' && cached.details.supplements.length;
-        if (!deferWrite) accept(rows, 'AMLL TTML', details);
-        if (!needsSidecars) return;
-        const { data } = await readNative();
-        if (!current() || !validNative(data)) return;
-        const merged = mergeLyricSidecars(rows, parseNativeLyrics(data, true));
-        const fields = ['translation', 'roman'].filter(field => merged.some((row, i) =>
-          (row[field] && !rows[i][field]) || row.backingLines.some((vocal, j) => vocal[field] && !rows[i].backingLines[j]?.[field])));
-        if (!fields.includes('roman') && merged.some((row, i) =>
-          (row.romanWords?.length && !rows[i].romanWords?.length) ||
-          row.backingLines.some((v, j) => v.romanWords?.length && !rows[i].backingLines[j]?.romanWords?.length))) fields.push('roman');
-        if (fields.length) accept(merged, 'AMLL TTML', { ...details,
-          contributors: fields.includes('translation') ? extractNativeContributors(data).filter(c => c.role.includes('译文')) : [],
-          supplements: fields.map(field => '网易云' + (field === 'roman' ? '罗马音' : '译文')),
+          // Native sidecars can fill missing fields without replacing the selected TTML.
+          const missing = vocal => !vocal.translation || !vocal.roman || (vocal.roman && !vocal.romanWords?.length);
+          const needsSidecars = rows.some(row => missing(row) || row.backingLines.some(missing));
+          const deferWrite = needsSidecars && cached?.source === 'AMLL TTML' && cached.details.supplements.length;
+          if (!deferWrite) accept(rows, 'AMLL TTML', details);
+          if (!needsSidecars) return true;
+          const { data } = await readNative();
+          if (!current() || !validNative(data)) return true;
+          const merged = mergeLyricSidecars(rows, parseNativeLyrics(data, true));
+          const fields = ['translation', 'roman'].filter(field => merged.some((row, i) =>
+            (row[field] && !rows[i][field]) || row.backingLines.some((vocal, j) => vocal[field] && !rows[i].backingLines[j]?.[field])));
+          if (!fields.includes('roman') && merged.some((row, i) =>
+            (row.romanWords?.length && !rows[i].romanWords?.length) ||
+            row.backingLines.some((v, j) => v.romanWords?.length && !rows[i].backingLines[j]?.romanWords?.length))) fields.push('roman');
+          if (fields.length) accept(merged, 'AMLL TTML', { ...details,
+            contributors: fields.includes('translation') ? extractNativeContributors(data).filter(c => c.role.includes('译文')) : [],
+            supplements: fields.map(field => '网易云' + (field === 'roman' ? '罗马音' : '译文')),
+          });
+          else if (deferWrite) accept(rows, 'AMLL TTML', details);
+          return true;
+        }
+      },
+      async qq() {
+        const qq = await window.AppleNowPlayingQQLyrics?.fetchLyrics(track, request.signal).catch(error => {
+          console.warn('[AppleNowPlaying] QQ 歌词不可用', error);
+          return null;
         });
-        else if (deferWrite) accept(rows, 'AMLL TTML', details);
+        if (!current() || !qq) return;
+        const rows = parseQQLyrics(qq);
+        if (!rows.length) return;
+        accept(rows, 'QQ 音乐 ' + (qq.format === 'qrc' ? 'QRC' : 'LRC'), {
+          url: qq.url, contributors: [], supplements: [],
+          metadata: [{ key: 'QQ 匹配歌曲', value: qq.candidate?.title || track.title },
+            { key: 'QQ 艺人', value: qq.candidate?.artist || track.artist }],
+        });
+        return true;
+      },
+      async netease() {
+        const { data, missing } = await readNative();
+        if (!current()) return;
+        const available = validNative(data);
+        const rows = available ? parseNativeLyrics(data, true) : [];
+        const pure = available && (data.nolyric === true || /纯音乐[，,、 ]?请欣赏/.test(data.lrc?.lyric || ''));
+        const source = rows.some(row => row.words.length) ? '网易云 YRC' : pure ? '纯音乐' :
+          rows.length ? '网易云 LRC' : available || missing ? '暂无同步歌词' : '歌词获取失败';
+        const details = { url: nativeUrl.href, contributors: available ? extractNativeContributors(data) : [], metadata: [], supplements: [] };
+        if (rows.length && source !== '纯音乐') {
+          accept(rows, source, details);
+          return true;
+        }
+        nativeFallback = { source, details };
+      },
+    };
+    for (const sourceId of sources.order) {
+      if (!current()) return;
+      if (providers[sourceId]) {
+        if (await providers[sourceId]()) return;
+        continue;
+      }
+      const custom = sources.custom.find(source => source.id === sourceId);
+      if (!custom) continue;
+      const url = customLyricUrl(custom.url, song);
+      if (!url) continue;
+      const result = await requestLyrics(url, request, 4000, async response => {
+        const body = (await response.text()).trim();
+        return body.length <= 2 * 1024 * 1024 ? body : '';
+      }, cacheMode, true);
+      if (!current()) return;
+      if (!result.data) continue;
+      let rows;
+      try {
+        if (custom.format === 'ttml') rows = parseTtml(result.data);
+        else if (custom.format === 'lys') rows = parseLyricifySyllable(result.data);
+        else if (custom.format === 'qrc') {
+          const content = result.data.startsWith('[') ? result.data : await window.AppleNowPlayingQQCodec?.decode(result.data);
+          rows = parseQQLyrics({ format: 'qrc', content });
+        } else rows = parseNativeLyrics({ [custom.format]: { lyric: result.data } }, custom.format === 'yrc');
+      } catch (_) { continue; }
+      if (!current()) return;
+      if (!hasLyricText(rows)) continue;
+      accept(rows, '自定义 ' + custom.format.toUpperCase(), {
+        url: url.origin, customSourceId: custom.id, customSourceName: custom.name, contributors: [],
+        metadata: custom.website ? [{ key: '歌词源网站', value: custom.website }] : [], supplements: [],
+      });
+      return;
+    }
+    if (current()) accept([], nativeFallback?.source || '歌词获取失败', nativeFallback?.details);
+  }
+
+  async function refreshCurrentLyrics() {
+    if (manualLyricRefresh?.request || lifetime.signal.aborted) return;
+    const song = host.read();
+    const { id } = song;
+    const job = manualLyricRefresh = { id };
+    if (!/^\d+$/.test(id)) {
+      job.message = '请先选择一首歌曲';
+      refreshSettingsSource();
+      return;
+    }
+    const request = job.request = new AbortController();
+    const current = () => !request.signal.aborted && host.trackId() === id;
+    const sources = lyricSourceSettings;
+    refreshSettingsSource();
+    try {
+      const cache = await openLyricCache(id);
+      if (!current()) return;
+      const previous = cache?.entry || (lyricTrackId === id ? { source: lyricSource, details: lyricDetails } : undefined);
+      if (host.canFetchPublicQQLyrics()) window.AppleNowPlayingQQLyrics?.setNativeFetch?.((url, signal) => host.fetchPublicQQLyrics(url, signal));
+      let updated;
+      await fetchLyricSources(song, request, current, (rows, source, details) => {
+        if (hasLyricText(rows)) updated = { version: lyricCacheVersion, id, sourceRevision: sources.revision,
+          savedAt: Date.now(), source, details, rows };
+      }, { cached: previous, sources, cacheMode: 'reload' });
+      if (!current()) return;
+      if (!updated) {
+        job.message = cache?.entry || (lyricTrackId === id && rawLyrics.length) ? '未获取到新歌词，现有歌词已保留' : '未获取到可用歌词';
         return;
       }
-      const qq=await window.AppleNowPlayingQQLyrics?.fetchLyrics(track,request.signal).catch(error=>{
-        console.warn('[AppleNowPlaying] QQ 歌词不可用', error);
-        return null;
-      });
-      if (!current()) return;
-      if (qq) {
-        const rows=parseQQLyrics(qq);
-        if (rows.length) {
-          accept(rows,'QQ 音乐 '+(qq.format==='qrc'?'QRC':'LRC'),{
-            url:qq.url,contributors:[],supplements:[],
-            metadata:[{key:'QQ 匹配歌曲',value:qq.candidate?.title||track.title},
-              {key:'QQ 艺人',value:qq.candidate?.artist||track.artist}],
-          });
-          return;
-        }
+      if (lyricTrackId === id && lyricRequest) {
+        lyricRequest.abort();
+        lyricRequest = undefined;
       }
-      const { data, missing } = await readNative();
-      if (!current()) return;
-      const available = validNative(data);
-      const rows = available ? parseNativeLyrics(data, true) : [];
-      const pure = available && (data.nolyric === true || /纯音乐[，,、 ]?请欣赏/.test(data.lrc?.lyric || ''));
-      const source = rows.some(row => row.words.length) ? '网易云 YRC' : pure ? '纯音乐' :
-        rows.length ? '网易云 LRC' : available || missing ? '暂无同步歌词' : '歌词获取失败';
-      accept(source === '纯音乐' ? [] : rows, source, { url: nativeUrl.href,
-        contributors: available ? extractNativeContributors(data) : [], metadata: [], supplements: [] });
-    } catch(error) {
-      if (!current()) return;
-      if (!lyrics.length) publish([], '歌词获取失败');
-      console.warn('[AppleNowPlaying] 无法处理歌词',error);
+      lyricTrackId = id;
+      restartLyrics = false;
+      publishLyrics(updated.rows, updated.source, updated.details, song.duration);
+      const saved = cache && await writeLyricCache(cache.fs, cache.directory, cache.file, updated);
+      job.message = saved ? '歌词已刷新' : '歌词已刷新，本次未写入本地缓存';
+    } catch (error) {
+      if (current()) job.message = '刷新歌词失败';
+      console.warn('[AppleNowPlaying] 刷新歌词失败', error);
     } finally {
-      if (lyricRequest===request) lyricRequest=undefined;
+      job.request = undefined;
+      refreshSettingsSource();
     }
   }
 
@@ -4815,6 +5050,132 @@
 
   if (typeof plugin.onUnload === 'function') plugin.onUnload(dispose);
 
+  async function openPluginSettingsLink(event) {
+    const url = event.currentTarget.href;
+    if (typeof window.betterncm?.app?.exec !== 'function') {
+      if (host.openExternal(url)) event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    try {
+      await window.betterncm.app.exec(url);
+    } catch (error) {
+      if (!host.openExternal(url)) console.warn('[AppleNowPlaying] 无法打开外部链接', error);
+    }
+  }
+
+  function configureLyricSources(settings) {
+    const orderList = settings.querySelector('[data-lyric-source-order]');
+    const status = settings.querySelector('[data-lyric-source-status]');
+    const showStatus = message => {
+      text(status, message);
+      status.hidden = !message;
+    };
+    function saveSources(changes, focusedId, direction) {
+      const next = normalizeLyricSources({ ...lyricSourceSettings, ...changes,
+        revision: Math.max(Date.now(), lyricSourceSettings.revision + 1) });
+      if (!saveObject(lyricSourcesKey, next)) {
+        showStatus('歌词来源设置保存失败');
+        return false;
+      }
+      lyricSourceSettings = next;
+      renderOrder(focusedId, direction);
+      showStatus('已保存，刷新本曲歌词可立即应用');
+      return true;
+    }
+    function renderOrder(focusedId, direction) {
+      orderList.replaceChildren();
+      const { order, custom } = lyricSourceSettings;
+      order.forEach((id, index) => {
+        const customSource = custom.find(source => source.id === id);
+        const label = customSource ? customSource.name + '（' + customSource.format.toUpperCase() + '）' : builtInLyricSources[id].name;
+        const row = document.createElement('li');
+        const name = document.createElement('span');
+        text(name, (index + 1) + '. ' + label);
+        if (customSource?.description) name.title = customSource.description;
+        const controls = document.createElement('span');
+        controls.className = 'anp-source-move';
+        row.append(name, controls);
+        orderList.append(row);
+        const moveButtons = [-1, 1].map(delta => {
+          const target = index + delta;
+          const caption = delta < 0 ? '上移' : '下移';
+          const button = menuButton(controls, 'move-lyric-source', caption, {}, target < 0 || target >= order.length);
+          button.className = 'anp-config-action';
+          button.setAttribute('aria-label', caption + ' ' + label);
+          button.addEventListener('click', () => {
+            const reordered = [...order];
+            [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+            saveSources({ order: reordered }, id, delta);
+          });
+          return button;
+        });
+        if (customSource) {
+          if (customSource.website) {
+            const website = document.createElement('a');
+            website.className = 'anp-config-action';
+            website.href = customSource.website;
+            website.target = '_blank';
+            website.rel = 'noopener noreferrer';
+            website.setAttribute('aria-label', '访问 ' + customSource.name + ' 的网站');
+            text(website, '网站');
+            website.addEventListener('click', openPluginSettingsLink);
+            controls.append(website);
+          }
+          const remove = menuButton(controls, 'remove-lyric-source', '移除');
+          remove.className = 'anp-config-action';
+          remove.setAttribute('aria-label', '移除 ' + customSource.name);
+          remove.addEventListener('click', () => saveSources({ custom: custom.filter(source => source.id !== id),
+            order: order.filter(sourceId => sourceId !== id) }));
+        }
+        if (focusedId === id) {
+          const preferred = moveButtons[direction < 0 ? 0 : 1];
+          (preferred.disabled ? moveButtons.find(button => !button.disabled) : preferred)?.focus();
+        }
+      });
+    }
+    function addSource(name, format, url, website, description = '') {
+      name = name.trim();
+      format = format.trim().toLowerCase();
+      url = url.trim();
+      website = website.trim();
+      if (name.length > 60) { showStatus('歌词源名称不能超过 60 个字符'); return false; }
+      if (!customLyricFormats.includes(format)) { showStatus('请选择 LRC、TTML、YRC、QRC 或 Lyricify Syllable'); return false; }
+      const sample = customLyricUrl(url, { id: '1' });
+      if (!sample) { showStatus('请输入包含有效歌曲占位符的 HTTPS 歌词网址'); return false; }
+      const homepage = lyricSourceWebsite(website);
+      if (website && !homepage) { showStatus('歌词源网站需使用有效的 HTTP 或 HTTPS 地址'); return false; }
+      if (lyricSourceSettings.custom.some(source => source.format === format && source.url === url)) {
+        showStatus('已添加同一网址和格式的歌词源');
+        return false;
+      }
+      const id = 'custom-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+      return saveSources({ custom: [...lyricSourceSettings.custom, {
+        id, name: name || sample.hostname, format, url, website: homepage || '', description: description.trim(),
+      }],
+        order: [id, ...lyricSourceSettings.order] });
+    }
+    const manual = settings.querySelector('[data-lyric-source-add]');
+    manual.addEventListener('submit', event => {
+      event.preventDefault();
+      const form = new FormData(manual);
+      if (addSource(form.get('sourceName'), form.get('format'), form.get('url'), form.get('website'))) manual.reset();
+    });
+    const fromString = settings.querySelector('[data-lyric-source-import]');
+    fromString.addEventListener('submit', event => {
+      event.preventDefault();
+      const parts = String(new FormData(fromString).get('sourceString')).trim().split('|');
+      if (parts.length !== 5) { showStatus('请输入完整的 AMLL 五段式歌词源字符串'); return; }
+      let name, description;
+      try {
+        name = decodeURIComponent(parts[1]);
+        description = decodeURIComponent(parts[2]);
+      } catch (_) { showStatus('歌词源字符串的名称或简介编码无效'); return; }
+      if (addSource(name, parts[3], parts[4], '', description)) fromString.reset();
+    });
+    renderOrder();
+  }
+
   plugin.onConfig(() => {
     const repositoryUrl = 'https://github.com/Cellophane233/AppleNowPlaying';
     const settings = document.createElement('div');
@@ -4845,6 +5206,31 @@
         <section class="anp-config-card">
           <span class="anp-config-icon">${icon('lyrics')}</span>
           <div class="anp-config-copy"><strong>当前曲目歌词来源：</strong><output aria-live="polite"></output></div>
+          <button type="button" class="anp-config-action" data-refresh-lyrics>刷新本曲歌词</button>
+          <small class="anp-config-result" role="status" hidden></small>
+        </section>
+        <section class="anp-config-card anp-source-config">
+          <strong>歌词来源优先级</strong>
+          <small>从上到下尝试，取到可用歌词后即停止。</small>
+          <ol data-lyric-source-order aria-label="歌词来源优先级"></ol>
+        </section>
+        <section class="anp-config-card anp-source-config">
+          <strong>自定义歌词来源</strong>
+          <form data-lyric-source-add>
+            <label>歌词源名称<input name="sourceName" maxlength="60" placeholder="选填，默认使用网址域名"></label>
+            <label>歌词来源模板链接<input name="url" type="text" inputmode="url" maxlength="2048"
+              placeholder="https://example.com/lyrics/[NCM_ID].ttml" required></label>
+            <small>支持 [NCM_ID]、[SONG_NAME_URI]、[SONG_ARTISTS_URI] 和 [SONG_ALIAS_URI]。</small>
+            <label class="anp-source-format">歌词文件格式<select name="format">${Object.entries(customLyricFormatLabels)
+              .map(([format, label]) => `<option value="${format}">${label}</option>`).join('')}</select></label>
+            <label>歌词源网站<input name="website" type="url" maxlength="2048" placeholder="选填"></label>
+            <button type="submit" class="anp-config-action">添加歌词来源</button>
+          </form>
+          <form data-lyric-source-import>
+            <label class="anp-source-url">AMLL 歌词源字符串<input name="sourceString" maxlength="4096" required></label>
+            <button type="submit" class="anp-config-action">从歌词源字符串添加</button>
+          </form>
+          <small data-lyric-source-status role="status" hidden></small>
         </section>
         <section class="anp-config-card">
           <span class="anp-config-icon">${icon('music')}</span>
@@ -4873,25 +5259,16 @@
       dirty = true;
       metadataSignature = '';
     });
-    settingsSource = settings.querySelector('output');
+    lyricSettings = { source: settings.querySelector('output'), button: settings.querySelector('[data-refresh-lyrics]'),
+      result: settings.querySelector('.anp-config-result') };
+    lyricSettings.button.addEventListener('click', refreshCurrentLyrics);
     refreshSettingsSource();
     const entry = settings.querySelector('button');
     entry.addEventListener('click', () => open(entry));
     for (const reference of settings.querySelectorAll('a')) {
-      const url = reference.href;
-      reference.addEventListener('click', async event => {
-        if (typeof window.betterncm?.app?.exec !== 'function') {
-          if (host.openExternal(url)) event.preventDefault();
-          return;
-        }
-        event.preventDefault();
-        try {
-          await window.betterncm.app.exec(url);
-        } catch (error) {
-          if (!host.openExternal(url)) console.warn('[AppleNowPlaying] 无法打开外部链接', error);
-        }
-      });
+      reference.addEventListener('click', openPluginSettingsLink);
     }
+    configureLyricSources(settings);
     return settings;
   });
 })();
