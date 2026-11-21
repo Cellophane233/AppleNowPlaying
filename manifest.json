@@ -4,7 +4,7 @@
   "version": "0.5.66",
   "author": "cello",
   "description": "Apple Music 风格的沉浸播放页，含高级歌词、流体与律动、字体和宿主队列管理",
-  "preview": "preview.jpg",
+  "preview": "preview.gif",
   "type": "extension",
   "ncm3-compatible": true,
   "ncm-version-req": ">=3.1.41",

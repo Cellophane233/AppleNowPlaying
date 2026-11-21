@@ -4,7 +4,7 @@ AppleNowPlaying 是基于 BetterNCM 的 Windows 网易云音乐桌面端插件�
 
 当前版本为 `0.5.66`，版本与宿主要求以 [manifest.json](./manifest.json) 为准。
 
-![AppleNowPlaying 播放页预览](./preview.jpg)
+![AppleNowPlaying 播放页预览](./preview.gif)
 
 ## 功能特性
 
