@@ -54,7 +54,7 @@ python .\build.py
 python -m zipfile -e ..\plugins\AppleNowPlaying-0.5.65.plugin .\dist
 ```
 
-`dist/` 包含 `manifest.json`、生成的 `main.js`、预览图，以及随包的第三方源码和许可证。向插件库提交登记 JSON 时，将它放入插件库的 `plugins-list/` 目录。
+`dist/` 包含 `manifest.json`、生成的 `main.js`、预览图、项目许可证，以及随包的第三方源码和许可证。向插件库提交登记 JSON 时，将它放入插件库的 `plugins-list/` 目录。
 
 ## 基本使用
 
@@ -81,3 +81,9 @@ python -m zipfile -e ..\plugins\AppleNowPlaying-0.5.65.plugin .\dist
 - 逐字、译文、罗马音与和声的可用性取决于当前歌曲的歌词数据。AMLL 与 QQ 歌词依赖外部服务，访问失败会按上述顺序回退。QQ 匹配会核对曲名、艺人、版本和时长，匹配不上时继续尝试网易云歌词。
 - 播放、队列编辑、字体枚举与音频分析依赖网易云的内部接口。客户端升级或切换播放模式后，部分操作可能不可用，可从队列菜单回到原生队列管理。系统减少动态效果、静态背景和暂停状态会限制音频律动。
 - 保存封面需要 BetterNCM 的本地文件接口和 Windows PowerShell。支持 JPEG、PNG、GIF、WebP 和 AVIF，大小上限为 20 MiB。同名封面会加序号保存。
+
+## 开源许可
+
+AppleNowPlaying 自有代码采用 [GNU Affero General Public License v3.0](./LICENSE)（`AGPL-3.0-only`）。
+
+第三方组件沿用各自的许可。extSpotify 渲染器和所含依赖的源码及许可见 [组件说明](./vendor/extspotify/README.md)。QQ 歌词模块中的第三方代码保留原有的 Apache-2.0 声明。预览图中第三方封面和歌词的权利由各自权利人保留。

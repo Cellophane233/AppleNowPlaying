@@ -15,6 +15,7 @@ destination = source.parent / "plugins" / f"{manifest['name']}-{manifest['versio
 temporary = destination.with_suffix(".tmp")
 with zipfile.ZipFile(temporary, "w", zipfile.ZIP_DEFLATED) as archive:
     archive.write(source / "manifest.json", "manifest.json")
+    archive.write(source / "LICENSE", "LICENSE")
     archive.writestr("main.js", bundle)
     archive.write(source / manifest["preview"], manifest["preview"])
     for notice in [vendor / "README.md", vendor / "source.zip", *sorted((vendor / "LICENSES").glob("*"))]:
