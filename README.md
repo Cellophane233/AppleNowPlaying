@@ -2,9 +2,9 @@
 
 AppleNowPlaying 是基于 BetterNCM 的 Windows 网易云音乐桌面端插件，提供 Apple Music 风格的沉浸播放页。它可以接管底栏封面入口，提供同步歌词、封面背景和队列操作。网易云音乐负责音频播放、账户和曲库。
 
-当前版本为 `0.5.66`，版本与宿主要求以 [manifest.json](./manifest.json) 为准。
+当前版本为 `0.5.67`，版本与宿主要求以 [manifest.json](./manifest.json) 为准。
 
-![AppleNowPlaying 播放页预览](./preview.gif)
+![AppleNowPlaying 播放页预览](./preview.webp)
 
 ## 功能特性
 
@@ -44,14 +44,14 @@ New-Item -ItemType Directory -Path ..\plugins -Force | Out-Null
 python .\build.py
 ```
 
-脚本输出 `..\plugins\AppleNowPlaying-0.5.66.plugin`，其中版本号取自清单。源码目录位于 BetterNCM 数据目录下时，产物直接写入该数据目录的 `plugins`。其他位置构建时，将产物复制到实际的 BetterNCM 插件目录后重启宿主。运行时由 BetterNCM 加载 `main.js`，无需启动本地服务。单独重建 extSpotify 组件的依赖和步骤见 [组件说明](./vendor/extspotify/README.md)。
+脚本输出 `..\plugins\AppleNowPlaying-0.5.67.plugin`，其中版本号取自清单。源码目录位于 BetterNCM 数据目录下时，产物直接写入该数据目录的 `plugins`。其他位置构建时，将产物复制到实际的 BetterNCM 插件目录后重启宿主。运行时由 BetterNCM 加载 `main.js`，无需启动本地服务。单独重建 extSpotify 组件的依赖和步骤见 [组件说明](./vendor/extspotify/README.md)。
 
 ## 插件商店发布
 
 构建后，将安装包解压到干净的 `dist/` 目录。本仓库的 [商店登记条目](./plugins-list/AppleNowPlaying.json) 使用 `/dist` 作为 `subpath`。
 
 ```powershell
-python -m zipfile -e ..\plugins\AppleNowPlaying-0.5.66.plugin .\dist
+python -m zipfile -e ..\plugins\AppleNowPlaying-0.5.67.plugin .\dist
 ```
 
 `dist/` 包含 `manifest.json`、生成的 `main.js`、预览图、项目许可证，以及随包的第三方源码和许可证。向插件库提交登记 JSON 时，将它放入插件库的 `plugins-list/` 目录。
@@ -80,9 +80,9 @@ python -m zipfile -e ..\plugins\AppleNowPlaying-0.5.66.plugin .\dist
 
 ## 注意事项
 
-- 逐字、译文、罗马音与和声的可用性取决于当前歌曲的歌词数据。AMLL 与 QQ 歌词依赖外部服务，访问失败会按上述顺序回退。QQ 匹配会核对曲名、艺人、版本和时长，匹配不上时继续尝试网易云歌词。
+- 逐字、译文、罗马音与和声的可用性取决于当前歌曲的歌词数据。AMLL 与 QQ 歌词依赖外部服务，访问失败会按上述顺序回退。QQ 匹配会核对曲名、艺人、版本和时长，匹配失败后继续尝试其他歌词来源。QQ 歌词查询会向腾讯发送当前歌曲的曲名、艺人和可用的专辑名。AMLL 歌词查询会向社区镜像发送网易云歌曲 ID。
 - 播放、队列编辑、字体枚举与音频分析依赖网易云的内部接口。客户端升级或切换播放模式后，部分操作可能不可用，可从队列菜单回到原生队列管理。系统减少动态效果、静态背景和暂停状态会限制音频律动。
-- 保存封面需要 BetterNCM 的本地文件接口和 Windows PowerShell。支持 JPEG、PNG、GIF、WebP 和 AVIF，大小上限为 20 MiB。同名封面会加序号保存。
+- 保存封面需要 BetterNCM 的本地文件接口，首次解析保存目录时会用隐藏 PowerShell 查询 Windows「图片」目录。支持 JPEG、PNG、GIF、WebP 和 AVIF，大小上限为 20 MiB。同名封面会加序号保存。
 
 ## 开源许可
 

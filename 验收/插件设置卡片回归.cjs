@@ -42,11 +42,20 @@ runUI(async ({ evaluate, action, call, until }) => {
   assert.deepEqual(await evaluate('Array.from(' + root + '.querySelectorAll("a"), link => link.href)'), expectedLinks);
   await evaluate(`(function () {
     test.configLinks = [];
-    window.betterncm = { app: { exec: async url => test.configLinks.push(url) } };
+    test.configFallback = [];
+    window.betterncm = {
+      ncm: { openUrl: async url => { test.configLinks.push(url); } },
+      app: { exec: async url => { test.configFallback.push(url); } },
+    };
     for (const link of ${root}.querySelectorAll('a')) link.click();
   })()`);
   assert.deepEqual(await evaluate('test.configLinks'), expectedLinks);
-  await evaluate(`window.betterncm.app.exec = async () => { throw Error('unavailable'); };
+  assert.deepEqual(await evaluate('test.configFallback'), []);
+  await evaluate(`window.betterncm.ncm.openUrl = async () => false;
+    ${root}.querySelector('a[href$="/issues"]').click();`);
+  await until('test.configFallback.at(-1)', repository + '/issues');
+  await evaluate(`window.betterncm.ncm.openUrl = async () => { throw Error('unavailable'); };
+    window.betterncm.app.exec = async () => { throw Error('unavailable'); };
     ${root}.querySelector('a[href$="/issues"]').click();`);
   await until('test.opened.at(-1)', repository + '/issues');
   await action('close');

@@ -5052,13 +5052,22 @@
 
   async function openPluginSettingsLink(event) {
     const url = event.currentTarget.href;
-    if (typeof window.betterncm?.app?.exec !== 'function') {
+    const { ncm, app } = window.betterncm || {};
+    if (typeof ncm?.openUrl === 'function') {
+      event.preventDefault();
+      try {
+        if (await ncm.openUrl(url) !== false) return;
+      } catch (_) {
+        // Some BetterNCM builds still need the legacy host bridge.
+      }
+    }
+    if (typeof app?.exec !== 'function') {
       if (host.openExternal(url)) event.preventDefault();
       return;
     }
     event.preventDefault();
     try {
-      await window.betterncm.app.exec(url);
+      await app.exec(url);
     } catch (error) {
       if (!host.openExternal(url)) console.warn('[AppleNowPlaying] 无法打开外部链接', error);
     }
