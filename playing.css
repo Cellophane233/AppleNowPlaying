@@ -211,7 +211,9 @@ body.apple-now-playing-replace-native #vinyl-page-container { display: none !imp
 #apple-now-playing-page .apple-now-playing-lyric-translation { display: block; font-size: .62em; font-weight: 700; margin-top: .35em; opacity: .72; }
 #apple-now-playing-page .apple-now-playing-line.current .apple-now-playing-lyric-translation { color: #dbf2ff8e; opacity: 1; }
 #apple-now-playing-page .apple-now-playing-status { position: absolute; inset: 0; display: grid; place-content: center; color: var(--apple-now-playing-muted); pointer-events: none; }
-#apple-now-playing-page .apple-now-playing-tabs { display: flex; gap: clamp(10px,1.5vw,22px); position: absolute; right: 2.8vw; bottom: 3.6vh; color: #d4f1ffaf; }
+#apple-now-playing-page .apple-now-playing-tabs { display: flex; gap: clamp(10px,1.5vw,22px); position: absolute; right: 2.8vw; bottom: 3.6vh; color: #d4f1ffaf; opacity: 0; transition: opacity .45s ease; padding: 26px 22px 18px 30px; margin: -26px -22px -18px -30px; }
+#apple-now-playing-page .apple-now-playing-tabs.is-peeking { opacity: 1; }
+@media (hover: none) { #apple-now-playing-page .apple-now-playing-tabs { opacity: 1; } }
 #apple-now-playing-page .apple-now-playing-tabs [aria-pressed=true] { background: var(--apple-now-playing-selected); color: var(--apple-now-playing-selected-ink); }
 #apple-now-playing-page .apple-now-playing-queue { padding: 3vh 20px 0 0; }
 #apple-now-playing-page .apple-now-playing-queue h2 { font-size: clamp(22px,2.6vw,40px); margin: 0 0 14px; }

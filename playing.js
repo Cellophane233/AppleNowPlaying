@@ -1689,6 +1689,25 @@
     }
     page.addEventListener('click', handleClick);
     page.addEventListener('pointermove', () => setControlsHidden(false), { passive: true });
+    const tabs = q('tabs');
+    let tabsHovered = false, tabsKeyboardFocus = false;
+    const syncTabsPeek = () => tabs.classList.toggle('is-peeking', tabsHovered || tabsKeyboardFocus);
+    tabs.addEventListener('focusin', () => {
+      // :focus-visible 在 focusin 同一轮可能还没算好，延后一帧再判定
+      const apply = () => {
+        tabsKeyboardFocus = tabs.contains(document.activeElement) && document.activeElement.matches(':focus-visible');
+        syncTabsPeek();
+      };
+      (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : setTimeout)(apply);
+    });
+    tabs.addEventListener('pointerenter', () => { tabsHovered = true; syncTabsPeek(); });
+    tabs.addEventListener('pointerleave', () => { tabsHovered = false; syncTabsPeek(); });
+    tabs.addEventListener('focusout', event => {
+      if (!tabs.contains(event.relatedTarget)) {
+        tabsKeyboardFocus = false;
+        syncTabsPeek();
+      }
+    });
     page.addEventListener('focusin', event => {
       if (panelFade?.outgoing && view.right.contains(event.target)) {
         view.lyricsToggle.focus({ preventScroll: true });
@@ -2552,6 +2571,7 @@
     for (const key of ['karaoke', 'translation', 'roman']) {
       const button = view.tools.querySelector('[data-action="toggle-' + key + '"]');
       button.disabled = !available[key];
+      button.hidden = !available[key];
       button.setAttribute('aria-pressed', String(preferences[key]));
       if (key === 'roman') {
         const lineOnly = available.roman && !vocals.some(row => row.romanWords?.some(word => Number.isFinite(word.time) && word.duration > 0));
